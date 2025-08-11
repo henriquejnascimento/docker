@@ -5,13 +5,21 @@ services:
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+      - "8080:8080"  # Porta para acessar a Web UI      
     environment:
       # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
-      - DEBUG=${DEBUG:-0}
-      - SERVICES=sqs
+#      - LOCALSTACK_HOST=localstack
+#      - LOCALSTACK_UI=1  # Habilita o Web UI
+#      - DISABLE_CORS_CHECKS=1
+      - DEBUG=1
+      - SERVICES=s3,dynamodb,lambda,sns,sqs
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
-      - DEFAULT_REGION=us-east-1
+#      - ACTIVATE_PRO=1
+#      - DOCKER_HOST=unix:///var/run/docker.sock
+#      - LOCALSTACK_AUTH_TOKEN=
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+#    entrypoint: "/bin/bash -c 'docker-entrypoint.sh & sleep 10 && aws --endpoint-url=http://localhost:4566 s3 mb s3://meu-bucket && tail -f /dev/null'"
+
