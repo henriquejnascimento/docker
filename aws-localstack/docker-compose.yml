@@ -15,11 +15,14 @@ services:
       - SERVICES=s3,dynamodb,lambda,sns,sqs
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
 #      - ACTIVATE_PRO=1
 #      - DOCKER_HOST=unix:///var/run/docker.sock
 #      - LOCALSTACK_AUTH_TOKEN=
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./docker-entrypoint.sh:/etc/localstack/init/ready.d/10-bootstrap.sh:ro
+#    entrypoint: ["/bin/sh", "./docker-entrypoint.sh"]
 #    entrypoint: "/bin/bash -c 'docker-entrypoint.sh & sleep 10 && aws --endpoint-url=http://localhost:4566 s3 mb s3://meu-bucket && tail -f /dev/null'"
 
