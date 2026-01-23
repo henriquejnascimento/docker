@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPattern": "/products/999"
+  },
+  "response": {
+    "status": 404,
+    "bodyFileName": "not-found-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+services:
+  wiremock:
+    image: wiremock/wiremock:3.13.2
+    container_name: wiremock
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wiremock_data/mappings:/home/wiremock/mappings
+      - ./wiremock_data/__files:/home/wiremock/__files
+    environment:
+      - WIREMOCK_DISABLE_REQUEST_LOGGING=true
+    networks:
+      - wiremock-network
+    restart: unless-stopped
+
+networks:
+  wiremock-network:
+    driver: bridge
