@@ -11,7 +11,7 @@ services:
       - WIREMOCK_DISABLE_REQUEST_LOGGING=true
     networks:
       - wiremock-network
-    restart: unless-stopped
+    restart: no
 
 networks:
   wiremock-network:
