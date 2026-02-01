@@ -2,11 +2,11 @@ services:
   squid:
     image: sameersbn/squid:3.5.27-2
     container_name: squid-proxy
+    restart: no
     ports:
       - "3128:3128"
     volumes:
       - ./squid.conf:/etc/squid/squid.conf
-    restart: always
     networks:
       - squid-network
 
