@@ -7,11 +7,17 @@ services:
       - "127.0.0.1:4510-4559:4510-4559"  # External services port range
       - "8080:8080"  # Porta para acessar a Web UI
     environment:
-      - DEBUG=1
-      - SERVICES=s3,dynamodb,lambda,sns,sqs
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
+    - DEBUG=1
+    - SERVICES=s3,dynamodb,lambda,sns,sqs
+    - AWS_ACCESS_KEY_ID=test
+    - AWS_SECRET_ACCESS_KEY=test
+    - LOCALSTACK_AUTH_TOKEN=test
+    - AWS_DEFAULT_REGION=us-east-1
+    - SQS_ENDPOINT_STRATEGY=domain
+    - S3_ADDRESSING_STYLE=path
+    - LOCALSTACK_HOST=localstack
+    - HOSTNAME_EXTERNAL=localstack
+    - LS_MAIN_CONTAINER_ADVERTISE_EXTERNAL_URL=http://localstack:4566
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -23,20 +29,19 @@ services:
     image: hashicorp/terraform:1.14.4
     container_name: terraform
     volumes:
-      - ./terraform:/terraform  # Diretório local com os arquivos do Terraform
+      - ./terraform:/terraform
       - ~/.aws:/root/.aws  # Para usar as credenciais AWS locais
     working_dir: /terraform
-    entrypoint: ["sh", "-c", "terraform init && terraform apply -auto-approve"]  # Rodando terraform init e apply
+    entrypoint: ["sh", "-c", "terraform init && terraform apply -auto-approve && tail -f /dev/null"]
     environment:
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=us-east-1
-      - LOCALSTACK_HOST=localstack  # Nome do serviço localstack no Docker Compose
     depends_on:
-      - localstack  # Garante que o Terraform só será iniciado depois do LocalStack
+      - localstack
     networks:
       - localstack_network
 
 networks:
   localstack_network:
-    driver: bridge  # Rede compartilhada entre LocalStack e Terraform
+    driver: bridge
