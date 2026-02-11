@@ -1,0 +1,10 @@
+services:
+  php-app:
+    image: php:8.5.2-apache
+    container_name: php-8.5
+    volumes:
+      - ./app:/var/www/html
+      - ./apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
+    ports:
+      - "8081:80"
+    restart: no
