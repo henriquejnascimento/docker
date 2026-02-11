@@ -1,0 +1,13 @@
+services:
+  java-app:
+    image: eclipse-temurin:21-jdk
+    container_name: java-21
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: java -jar app.jar
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_OPTS=-Xms512m -Xmx1024m
+    restart: no
