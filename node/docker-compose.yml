@@ -1,0 +1,16 @@
+services:
+  node-app:
+    image: node:24.13.1
+    container_name: node-app
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && node index.js"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
