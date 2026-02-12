@@ -1,0 +1,26 @@
+services:
+  plex:
+    image: plexinc/pms-docker:1.43.0.10492-121068a07
+    container_name: plex
+    restart: no
+    ports:
+      - "32400:32400"
+      - "3005:3005"
+      - "8324:8324"
+      - "32469:32469"
+      - "1900:1900/udp"
+    volumes:
+      - ./plex_data/config:/config
+      - ./plex_data/media:/data
+    environment:
+      - PLEX_CLAIM=your_plex_claim_token
+      - ADVERTISE_IP=http://localhost:32400
+      - ALLOWED_NETWORKS=192.168.1.0/24
+      - PLEX_DISABLE_HWTRANS=1
+    devices: []
+    networks:
+      - plex-network
+
+networks:
+  plex-network:
+    driver: bridge
