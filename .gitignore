@@ -42,3 +42,6 @@ out/
 /terraform/terraform/.terraform.lock.hcl
 /terraform/terraform/terraform.tfstate
 /terraform/terraform/terraform.tfstate.backup
+
+### Node.js ###
+node/app/package-lock.json
