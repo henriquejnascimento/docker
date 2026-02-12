@@ -1,0 +1,12 @@
+services:
+  react-app:
+    image: node:24.13.1
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    ports:
+      - "3000:3000"
+    command: >
+      bash -c "npm install && npm start"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
