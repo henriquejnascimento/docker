@@ -48,3 +48,6 @@ out/
 
 ### Jellyfin ###
 /jellyfin/jellyfin_data/
+
+### Plex ###
+/plex/plex_data
