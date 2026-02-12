@@ -6,7 +6,7 @@ services:
       - "8080:8080"
     volumes:
       - drawio_data:/root/.drawio
-    restart: unless-stopped
+    restart: no
     environment:
       - VIRTUAL_HOST=drawio.local
       - VIRTUAL_PORT=8080
