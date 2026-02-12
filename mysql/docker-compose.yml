@@ -12,6 +12,19 @@ services:
       - '3306:3306'
     volumes:
       - mysql-volume:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.3
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - '8080:80'
+    depends_on:
+      - mysql
+
 volumes:
   mysql-volume:
     driver: local
