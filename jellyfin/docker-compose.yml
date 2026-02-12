@@ -1,0 +1,20 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:10.11.6
+    container_name: jellyfin
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./jellyfin_data/config:/config
+      - ./jellyfin_data/cache:/cache
+      - ./jellyfin_data/media:/media
+    environment:
+      - UID=1000
+      - GID=1000
+    restart: no
+    networks:
+      - jellyfin-network
+
+networks:
+  jellyfin-network:
+    driver: bridge
