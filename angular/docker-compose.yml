@@ -1,13 +1,13 @@
 services:
   angular:
-    image: node:24.13.1  # Usando a imagem oficial do Node.js 24.13.1
+    image: node:24.13.1
     container_name: angular-app
-    working_dir: /app/hello-world  # Diretório do projeto Angular dentro do contêiner
+    working_dir: /app/hello-world
     volumes:
-      - ./app:/app  # Mapeia o diretório app local para o contêiner
+      - ./app:/app
     ports:
-      - "4200:4200"  # Mapear a porta 4200 para acessar o Angular localmente
-    command: sh -c "npm install -g @angular/cli && npm install && ng serve --host 0.0.0.0 --disable-host-check"  # Instalar Angular CLI e rodar o servidor
+      - "4200:4200"
+    command: sh -c "npm install -g @angular/cli && npm install && ng serve --host 0.0.0.0 --disable-host-check"
     networks:
       - angular-network
 
