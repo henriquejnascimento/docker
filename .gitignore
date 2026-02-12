@@ -44,4 +44,7 @@ out/
 /terraform/terraform/terraform.tfstate.backup
 
 ### Node.js ###
-node/app/package-lock.json
+/node/app/package-lock.json
+
+### Jellyfin ###
+/jellyfin/jellyfin_data/
