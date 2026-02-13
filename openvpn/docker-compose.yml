@@ -1,0 +1,26 @@
+services:
+  openvpn:
+    image: d3vilh/openvpn-server:0.5.5
+    container_name: openvpn
+    privileged: true
+    ports:
+      - "1194:1194/udp"
+    volumes:
+      - ./openvpn-data/pki:/etc/openvpn/pki
+      - ./openvpn-data/clients:/etc/openvpn/clients
+      - ./config:/etc/openvpn/config  # Mapeamento do diretório local 'config' para o container
+    restart: unless-stopped
+
+  openvpn-ui:
+    image: d3vilh/openvpn-ui:0.9.5.6
+    container_name: openvpn-ui
+    environment:
+      - OPENVPN_ADMIN_USERNAME=admin
+      - OPENVPN_ADMIN_PASSWORD=senha123
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./openvpn-data/pki:/usr/share/easy-rsa/pki
+      - ./openvpn-data/db:/opt/openvpn-gui/db
+      - ./config:/etc/openvpn  # Mapeamento do mesmo diretório para o OpenVPN UI
+    restart: unless-stopped
