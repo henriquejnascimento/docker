@@ -24,4 +24,13 @@ Após subir o container, acesse:
 # 🔐 Credenciais de acesso
 
 - Usuário: **admin**
-- Senha: **admin**
+- Senha: **admin123456789**
+
+---
+# CSV - Regras
+
+Character set: Unicode (UTF-8)
+Field Delimiter (Delimitador de campo): ; (Ponto e vírgula)
+String Delimiter (Delimitador de texto): " (Aspas duplas)
+
+Os arquivos CSV devem estar no diretório "uploads"
