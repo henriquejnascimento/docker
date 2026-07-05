@@ -9,15 +9,17 @@ services:
     ports:
       - "8088:8088"
     environment:
-      DB_HOST: host.docker.internal
+      DB_HOST: postgres
       DB_USER: postgres
       DB_PASSWORD: root
       DB_NAME: superset
 
       SUPERSET_SECRET_KEY: "x9K2mP8vQ4zT7wL1cR6sN3bJ8hG5fD2aA9zX1cV7bM"
-      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:root@host.docker.internal:5432/superset
+      SUPERSET_CONFIG_PATH: /app/superset_config.py
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:root@postgres:5432/superset
 
     volumes:
+      - ./superset_config.py:/app/superset_config.py
       - ./entrypoint.sh:/app/entrypoint.sh
 
     entrypoint: ["/bin/bash", "/app/entrypoint.sh"]

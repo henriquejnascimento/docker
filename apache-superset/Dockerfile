@@ -2,21 +2,27 @@ FROM apache/superset:6.1.0
 
 USER root
 
-# Instala dependências básicas (caso precise de pg_isready, psql etc.)
+# 1. Instala as dependências de sistema
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     curl \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia o entrypoint para dentro da imagem
-COPY entrypoint.sh /usr/bin/entrypoint.sh
+# 2. Cria uma pasta customizada para pacotes e instala o psycopg2 diretamente nela
+RUN mkdir -p /app/custom_python_packages && \
+    pip install --no-cache-dir --target=/app/custom_python_packages psycopg2-binary && \
+    chown -R superset:superset /app/custom_python_packages
 
-# Permissão de execução
+# 3. Prepara o script de inicialização
+COPY entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod +x /usr/bin/entrypoint.sh
 
-# Volta para usuário padrão do Superset
+# 4. Volta para o usuário padrão por segurança
 USER superset
 
-# Define o entrypoint como o comando padrão
+# 5. Injeta a pasta customizada no PYTHONPATH para que o ambiente virtual a enxergue
+ENV PYTHONPATH=/app/custom_python_packages:$PYTHONPATH
+
+# Define o ponto de entrada
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
