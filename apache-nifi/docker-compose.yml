@@ -2,18 +2,17 @@ services:
   nifi:
     image: apache/nifi:2.10.0
     container_name: nifi
-    restart: unless-stopped
+    restart: no
 
     ports:
       - "8443:8443"
-
     environment:
       NIFI_WEB_HTTPS_PORT: "8443"
       NIFI_WEB_HTTPS_HOST: "0.0.0.0"
 
       # Use senha forte, com no mínimo 12 caracteres
       SINGLE_USER_CREDENTIALS_USERNAME: "admin"
-      SINGLE_USER_CREDENTIALS_PASSWORD: "admin"
+      SINGLE_USER_CREDENTIALS_PASSWORD: "admin123456789"
 
       # Memória da JVM
       NIFI_JVM_HEAP_INIT: "1g"
@@ -31,6 +30,8 @@ services:
       - nifi_provenance:/opt/nifi/nifi-current/provenance_repository
       - nifi_state:/opt/nifi/nifi-current/state
       - nifi_db:/opt/nifi/nifi-current/database_repository
+      - ./drivers:/opt/nifi/nifi-current/drivers
+      - ./uploads:/opt/nifi/nifi-current/dados_csv
 
     healthcheck:
       test: ["CMD-SHELL", "curl -k -f https://localhost:8443/nifi/ || exit 1"]
@@ -38,6 +39,9 @@ services:
       timeout: 10s
       retries: 10
       start_period: 90s
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   nifi_conf:
