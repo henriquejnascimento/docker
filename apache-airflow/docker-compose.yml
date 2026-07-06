@@ -1,0 +1,147 @@
+x-airflow-common:
+  &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.2.1}
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    # A partir da Airflow 3.x o padrão passou a ser o Simple Auth Manager, que gera senha
+    # aleatória e não suporta "airflow users create". Forçamos o FabAuthManager para ter
+    # login/senha fixos via _AIRFLOW_WWW_USER_USERNAME/_AIRFLOW_WWW_USER_PASSWORD.
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    # Aponte para o seu banco externo
+    # PG_PASSWORD é obrigatória (sem fallback) para não cair silenciosamente numa senha
+    # padrão adivinhável caso o .env não seja carregado
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${PG_USER:-airflow}:${PG_PASSWORD:?defina PG_PASSWORD no .env}@${PG_HOST:-postgres}:${PG_PORT:-5432}/${PG_DB:-airflow}
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${PG_USER:-airflow}:${PG_PASSWORD:?defina PG_PASSWORD no .env}@${PG_HOST:-postgres}:${PG_PORT:-5432}/${PG_DB:-airflow}
+    # O Redis ainda precisa ser mantido localmente, pois o MWAA/Airflow precisa de um broker dedicado
+    AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+    # Gere com: python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Se ficar vazia, o Airflow gera uma chave aleatória a cada start e conexões/senhas já
+    # criptografadas no banco deixam de ser decifráveis.
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-}
+    # Evita que toda DAG nova comece a rodar sozinha assim que aparece na pasta dags/
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+  volumes:
+    - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
+    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
+  # Mesmo UID do seu usuário no host (AIRFLOW_UID no .env), senão os arquivos criados em
+  # dags/logs ficam com dono "airflow" (uid 50000) e viram read-only para você fora do container
+  user: "${AIRFLOW_UID:-50000}:0"
+
+services:
+  # Mantemos o Redis local pois é um componente de mensageria do Airflow
+  redis:
+    image: redis:8.8.0-trixie
+    restart: no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - postgres-network
+
+  # Garante que o database do Airflow exista no Postgres externo antes de qualquer migração
+  airflow-db-init:
+    image: postgres:17.5
+    entrypoint: /bin/bash
+    environment:
+      PGPASSWORD: ${PG_PASSWORD:?defina PG_PASSWORD no .env}
+    command:
+      - -c
+      - |
+        set -e
+        # -d postgres: conecta no database de manutenção, não no ${PG_DB}, porque ele
+        # ainda pode não existir na primeira execução
+        until psql -h "${PG_HOST:-postgres}" -p "${PG_PORT:-5432}" -U "${PG_USER:-airflow}" -d postgres -tc "SELECT 1" >/dev/null 2>&1; do
+          echo "Aguardando o Postgres externo ficar disponível..."
+          sleep 2
+        done
+        # Idempotente: só cria o database se ele ainda não existir, para rodar sem erro em todo "docker compose up"
+        psql -h "${PG_HOST:-postgres}" -p "${PG_PORT:-5432}" -U "${PG_USER:-airflow}" -d postgres -tc \
+          "SELECT 1 FROM pg_database WHERE datname = '${PG_DB:-airflow}'" | grep -q 1 || \
+        psql -h "${PG_HOST:-postgres}" -p "${PG_PORT:-5432}" -U "${PG_USER:-airflow}" -d postgres -c \
+          "CREATE DATABASE \"${PG_DB:-airflow}\""
+    restart: no
+    networks:
+      - postgres-network
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        # "|| true": nas próximas subidas o usuário já existe e o comando retorna erro;
+        # ignoramos para não derrubar o container (a criação em si já é idempotente)
+        airflow users create \
+          --username "${_AIRFLOW_WWW_USER_USERNAME:-airflow}" \
+          --password "${_AIRFLOW_WWW_USER_PASSWORD:-airflow}" \
+          --firstname Air --lastname Flow --role Admin \
+          --email "${_AIRFLOW_WWW_USER_EMAIL:-airflow@example.com}" || true
+    restart: no
+    depends_on:
+      airflow-db-init:
+        condition: service_completed_successfully
+    networks:
+      - postgres-network
+
+  airflow-webserver:
+    <<: *airflow-common
+    # Na Airflow 3.x o comando "webserver" foi substituído por "api-server"
+    command: api-server
+    ports: ["8080:8080"]
+    restart: no
+    depends_on:
+      redis:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - postgres-network
+
+  # Na Airflow 3.x o parsing de DAGs saiu do scheduler e virou um serviço próprio
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    restart: no
+    depends_on:
+      redis:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - postgres-network
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: no
+    depends_on:
+      redis:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - postgres-network
+
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    restart: no
+    depends_on:
+      redis:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    networks:
+      - postgres-network
+
+networks:
+  # Rede criada pelo docker-compose do projeto "postgreSQL" (precisa estar rodando antes
+  # deste). O nome real é "<nome_do_projeto>_<nome_da_rede>"; confirme com "docker network ls"
+  # caso mude o nome da pasta do projeto Postgres.
+  postgres-network:
+    external: true
+    name: postgresql_postgres-network
