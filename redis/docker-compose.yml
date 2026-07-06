@@ -1,0 +1,22 @@
+services:
+  redis:
+    image: redis:8.8.0-alpine
+    container_name: redis
+    restart: no
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}"]
+    volumes:
+      - ./data:/data
+    ports:
+      - "6379:6379"
+
+  redisinsight:
+    image: redis/redisinsight:3.6.0
+    container_name: redisinsight
+    restart: no
+    volumes:
+      - ./redisinsight-data:/data
+    ports:
+      # GUI sem autenticação própria — só localhost, nunca exponha na rede
+      - "127.0.0.1:5540:5540"
+    depends_on:
+      - redis
