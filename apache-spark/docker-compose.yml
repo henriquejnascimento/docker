@@ -1,0 +1,22 @@
+services:
+  spark-master:
+    image: apache/spark:4.1.2
+    container_name: spark-master
+    # O comando abaixo diz à imagem oficial para se comportar como Master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    ports:
+      - "8080:8080" # Painel Web do Master
+      - "7077:7077" # Porta de comunicação/submissão
+
+  spark-worker:
+    image: apache/spark:4.1.2
+    container_name: spark-worker-1
+    # O comando abaixo diz à imagem para ser um Worker e se conectar ao Master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+    ports:
+      - "8081:8081" # Painel Web do Worker
+    depends_on:
+      - spark-master
