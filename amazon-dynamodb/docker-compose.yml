@@ -1,0 +1,24 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:3.3.0
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    volumes:
+      - ./dynamodb_data:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:5.3.4
+    container_name: dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      - DYNAMO_ENDPOINT=http://dynamodb:8000
+      # Opcional: evita problemas de permissão fake da AWS na SDK interna
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+    depends_on:
+      - dynamodb
