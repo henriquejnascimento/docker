@@ -1,0 +1,16 @@
+services:
+  sqlite-web:
+    image: ghcr.io/coleifer/sqlite-web:0.7.2
+    container_name: sqlite-web
+    restart: no
+    environment:
+      # Senha lida pela flag -P (sem prompt interativo, já que não há TTY em container)
+      - SQLITE_WEB_PASSWORD=${SQLITE_WEB_PASSWORD:?defina SQLITE_WEB_PASSWORD no .env}
+    volumes:
+      # Seu(s) arquivo(s) .db ficam aqui
+      - ./data:/data
+    ports:
+      - "8080:8080"
+    # -P: exige senha (via SQLITE_WEB_PASSWORD) para acessar a interface
+    # Adicione "-r" antes do arquivo para abrir em modo somente-leitura
+    command: ["-P", "${SQLITE_DB_FILE:?defina SQLITE_DB_FILE no .env}"]
