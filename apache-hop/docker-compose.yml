@@ -1,0 +1,51 @@
+services:
+  # Garante que o database dedicado do Hop exista no Postgres externo antes do hop-web subir
+  hop-db-init:
+    image: postgres:17.5
+    entrypoint: /bin/bash
+    environment:
+      PG_HOST: ${PG_HOST:-postgres}
+      PG_PORT: ${PG_PORT:-5432}
+      PG_USER: ${PG_USER:-postgres}
+      # psql usa PGPASSWORD; init-db.sh usa PG_PASSWORD
+      PGPASSWORD: ${PG_PASSWORD:?defina PG_PASSWORD no .env}
+      PG_PASSWORD: ${PG_PASSWORD:?defina PG_PASSWORD no .env}
+      PG_DB: ${PG_DB:-apache_hop}
+    volumes:
+      - ./init-db.sh:/init-db.sh:ro
+    command: ["/init-db.sh"]
+    restart: no
+    networks:
+      - postgres-network
+
+  hop-web:
+    image: apache/hop-web:2.18.1
+    container_name: hop-web
+    restart: no
+    ports:
+      - "8080:8080"
+    environment:
+      # Cria/registra automaticamente o projeto e o ambiente na primeira subida
+      # (script de entrada do próprio image: docker/resources/run-web.sh)
+      HOP_PROJECT_FOLDER: /project
+      HOP_PROJECT_NAME: hop
+      HOP_ENVIRONMENT_NAME: docker
+      # Arquivo com as variáveis (PG_HOST, PG_PORT, etc.) usadas pela conexão
+      # em project/metadata/rdbms/postgres.json
+      HOP_ENVIRONMENT_CONFIG_FILE_NAME_PATHS: /config/environment.json
+      HOP_LOG_LEVEL: Basic
+    volumes:
+      # Projeto (pipelines, workflows, metadata) fica persistido no host
+      - ./project:/project
+      - ./config:/config
+    depends_on:
+      hop-db-init:
+        condition: service_completed_successfully
+    networks:
+      - postgres-network
+
+networks:
+  # Rede criada pelo docker-compose do projeto "postgreSQL" (precisa estar rodando antes deste)
+  postgres-network:
+    external: true
+    name: postgresql_postgres-network

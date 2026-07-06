@@ -1,0 +1,29 @@
+{
+  "variables": [
+    {
+      "name": "PG_HOST",
+      "value": "postgres",
+      "description": "Container do Postgres externo (projeto postgreSQL)"
+    },
+    {
+      "name": "PG_PORT",
+      "value": "5432",
+      "description": ""
+    },
+    {
+      "name": "PG_USER",
+      "value": "postgres",
+      "description": ""
+    },
+    {
+      "name": "PG_PASSWORD",
+      "value": "root",
+      "description": ""
+    },
+    {
+      "name": "PG_DB",
+      "value": "apache_hop",
+      "description": "Database dedicado do Hop, criado automaticamente pelo serviço hop-db-init. Mantenha em sincronia com PG_DB no .env"
+    }
+  ]
+}
