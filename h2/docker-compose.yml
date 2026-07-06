@@ -1,0 +1,19 @@
+services:
+  h2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        H2_VERSION: 2.4.240
+        H2_SHA256: 29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0
+    container_name: h2
+    restart: no
+    environment:
+      - H2_ADMIN_PASSWORD=${H2_ADMIN_PASSWORD:?defina H2_ADMIN_PASSWORD no .env (mínimo 12 caracteres)}
+    volumes:
+      - ./data:/data
+    ports:
+      # Console web — só localhost, nunca exponha na rede (veja README)
+      - "127.0.0.1:8082:8082"
+      # TCP/JDBC — para apps, DBeaver, etc.
+      - "9092:9092"
