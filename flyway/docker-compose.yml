@@ -1,0 +1,28 @@
+services:
+  flyway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: flyway
+
+    environment:
+      PGPASSWORD: root
+      FLYWAY_DATABASE_NAME: flyway_db
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/flyway_db
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: root
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+
+    volumes:
+      - ./sql:/flyway/sql
+      - ./init:/init
+
+    networks:
+      - postgres-network
+
+networks:
+  postgres-network:
+    external: true
+    name: postgresql_postgres-network
