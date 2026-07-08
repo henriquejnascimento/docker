@@ -1,0 +1,10 @@
+services:
+  appsmith:
+    image: appsmith/appsmith-ce:v2.1
+    container_name: appsmith
+    restart: no
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./stacks:/appsmith-stacks
